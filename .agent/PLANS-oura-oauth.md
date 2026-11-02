@@ -12,9 +12,9 @@ Oura の日次スコアを、家の Stream Deck の一つのキーに表示す�
 
 - [x] (2026-11-02 16:59 JST) 新規 Personal Access Token が廃止済みで、OAuth 2.0 アプリが必要と確認した。
 - [x] (2026-11-02 16:59 JST) `ummshun/oura-stream-deck` が未作成であること、GitHub の `ummshun` 認証が有効であることを確認した。
-- [ ] 静的公開ページ、Privacy Policy、Terms of Service を作成し、ローカル検証する。
-- [ ] private で初期commitを作り、secret scan 後に public GitHub repository と GitHub Pages へ公開する。
-- [ ] Oura Developer Portal のアプリ作成画面へ公開URL、loopback callback、`daily` scope を入力する。
+- [x] (2026-11-02 17:04 JST) 静的公開ページ、Privacy Policy、Terms of Service を作成し、3URLをローカル検証した。
+- [x] (2026-11-02 17:05 JST) secret scan後にpublic repository `ummshun/oura-stream-deck` とGitHub Pagesを公開し、3URLがHTTP 200であることを確認した。
+- [x] (2026-11-02 17:08 JST) Oura Developer Portalの作成フォームへ公開URL、localhost callback、`daily` scopeを入力した。Contact Email、Agreement、Createは未操作。
 - [ ] 本人の Oura API Agreement 同意と Create Application を承認後に実行する。
 - [ ] OAuth authorization-code flow with PKCE を `stream-deck-control` へ実装し、Keychainで token refresh を維持する。
 - [ ] MacBook と mini へ配備し、実スコア表示を読み戻す。
@@ -34,13 +34,13 @@ Oura の日次スコアを、家の Stream Deck の一つのキーに表示す�
 - Decision: OuraデータのOAuth scopeは `daily` のみとする。
   Rationale: Stream Deckへ表示するReadiness、Sleep、Activityの三スコアに必要な最小権限であり、個人情報、心拍、血中酸素、タグ、ワークアウトは不要である。
   Date/Author: 2026-11-02 / Codex.
-- Decision: OAuth redirect URIは `http://127.0.0.1:8765/callback` を第一候補にする。
-  Rationale: 認可コードをMacBook外へ転送せず、ローカル一回限りの受信サーバーで処理できる。Oura portalがHTTP loopback URIを拒否した場合は、portalが許容する同等のloopback URIを使い、公開callbackは作らない。
+- Decision: OAuth redirect URIは `http://localhost:8765/callback` を使う。
+  Rationale: 認可コードをMacBook外へ転送せず、ローカル一回限りの受信サーバーで処理できる。Oura portalはHTTPを`localhost`だけに許可し、`127.0.0.1`を拒否したため、portalが受け付けたloopback URIへ変更した。公開callbackは作らない。
   Date/Author: 2026-11-02 / Codex.
 
 ## Outcomes & Retrospective
 
-未完了。PATを前提にした既存のStream Deck実装はOAuth実装へ置換が必要であり、OAuth clientを作成する承認と、本人のOura認可が残っている。
+公開ページとOAuth実装は作成済み・テスト済みである。残るのは、Ouraアプリ作成のcontact email入力、API Agreement同意、client credentialのKeychain保存、本人のOAuth認可、実機の読み戻しである。
 
 ## Context and Orientation
 
@@ -58,7 +58,7 @@ OAuth authorization-code flowは、本人がOuraの認可画面で `daily` の�
 
 Oura portalでは、アプリ名を `Shun Matsubara Developer — Oura Stream Deck`、descriptionを `Personal Stream Deck display of my daily Oura Readiness, Sleep, and Activity scores.` とする。Website、Privacy、Termsには公開済みのURLを入れる。scopeは `daily` だけを選ぶ。Contact Emailは本人のOuraアカウント用メールを本人入力または表示済みのアカウント情報から選ぶ。API Agreementの同意とCreate Applicationは永続credentialを生成するため、本人の明示承認後にのみクリックする。
 
-作成後に `stream-deck-control/oura.py` へKeychain credential storage、PKCE authorization、token refresh、daily endpoint fetchを実装する。`authorize_oura.py` は一時的な127.0.0.1 listenerを開き、ブラウザをOAuth同意画面に送り、callbackのstateを照合してtokenをKeychainへ書く。`actions.py` はこのOAuth利用へ切り替え、`plugin/plugin.cjs` は既存のOura専用transportのまま表示を更新する。テストはPKCE state照合、Keychainの呼び出し、refresh token rotation、期限切れの更新、`daily`以外を要求しないことを覆う。
+作成後に `stream-deck-control/oura.py` へKeychain credential storage、PKCE authorization、token refresh、daily endpoint fetchを実装する。`oura.py authorize` は一時的なlocalhost listenerを開き、ブラウザをOAuth同意画面に送り、callbackのstateを照合してtokenをKeychainへ書く。`actions.py` はこのOAuth利用へ切り替え、`plugin/plugin.cjs` は既存のOura専用transportのまま表示を更新する。テストはPKCE state照合、Keychainの呼び出し、refresh token rotation、期限切れの更新、`daily`以外を要求しないことを覆う。
 
 ## Concrete Steps
 
@@ -97,9 +97,9 @@ OAuthは本人がOuraの同意画面で `daily` scopeのみを許可し、MacBoo
     https://ummshun.github.io/oura-stream-deck/privacy/
     https://ummshun.github.io/oura-stream-deck/terms/
 
-Oura OAuth callback候補は次である。
+Oura OAuth callbackは次である。
 
-    http://127.0.0.1:8765/callback
+    http://localhost:8765/callback
 
 ## Interfaces and Dependencies
 
@@ -115,4 +115,4 @@ Oura OAuth callback候補は次である。
 
 Keychain service名は `com.shun.stream-deck-control.oura` を維持するが、account名はtoken種別を区別する。すべてのHTTP requestは `User-Agent: ShunStreamDeck/1.0` とBearer access tokenを使う。
 
-Plan updated 2026-11-02 16:59 JST: created after Oura PAT deprecation required a shift to OAuth and a public policy site.
+Plan updated 2026-11-02 17:05 JST: Oura portal accepted HTTP loopback only with localhost, so the callback changed from 127.0.0.1 to localhost.
