@@ -16,8 +16,8 @@ Oura の日次スコアを、家の Stream Deck の一つのキーに表示す�
 - [x] (2026-11-02 17:05 JST) secret scan後にpublic repository `ummshun/oura-stream-deck` とGitHub Pagesを公開し、3URLがHTTP 200であることを確認した。
 - [x] (2026-11-02 17:08 JST) Oura Developer Portalの作成フォームへ公開URL、localhost callback、`daily` scopeを入力した。Contact Email、Agreement、Createは未操作。
 - [ ] 本人の Oura API Agreement 同意と Create Application を承認後に実行する。
-- [ ] OAuth authorization-code flow with PKCE を `stream-deck-control` へ実装し、Keychainで token refresh を維持する。
-- [ ] MacBook と mini へ配備し、実スコア表示を読み戻す。
+- [x] (2026-11-02 17:17 JST) OAuth authorization-code flow with PKCE、refresh token rotation、stdin経由のKeychain保存を`stream-deck-control`へ実装し、Python 42件・Node 24件のテストを通した。
+- [x] (2026-11-02 17:17 JST) Stream Deck pluginをminiへ再配備し、installerの15キー確認とplugin実体のreadbackを通した。実スコア表示はOAuth認可後に確認する。
 
 ## Surprises & Discoveries
 
@@ -40,7 +40,7 @@ Oura の日次スコアを、家の Stream Deck の一つのキーに表示す�
 
 ## Outcomes & Retrospective
 
-公開ページとOAuth実装は作成済み・テスト済みである。残るのは、Ouraアプリ作成のcontact email入力、API Agreement同意、client credentialのKeychain保存、本人のOAuth認可、実機の読み戻しである。
+公開ページとOAuth実装は作成済み・テスト済みであり、pluginはminiへ再配備済みである。残るのは、Ouraアプリ作成のcontact email入力、API Agreement同意、client credentialのKeychain保存、本人のOAuth認可、実機のスコア表示の読み戻しである。
 
 ## Context and Orientation
 
@@ -115,4 +115,4 @@ Oura OAuth callbackは次である。
 
 Keychain service名は `com.shun.stream-deck-control.oura` を維持するが、account名はtoken種別を区別する。すべてのHTTP requestは `User-Agent: ShunStreamDeck/1.0` とBearer access tokenを使う。
 
-Plan updated 2026-11-02 17:05 JST: Oura portal accepted HTTP loopback only with localhost, so the callback changed from 127.0.0.1 to localhost.
+Plan updated 2026-11-02 17:17 JST: OAuth implementation was reviewed, tested, committed, pushed, and the plugin was redeployed to mini. Oura application creation and live authorization remain human-gated.
